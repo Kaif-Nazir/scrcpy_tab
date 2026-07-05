@@ -29,14 +29,24 @@ app/deps/libusb.sh $WINXX cross shared
 DEPS_INSTALL_DIR="$PWD/app/deps/work/install/$WINXX-cross-shared"
 ADB_INSTALL_DIR="$PWD/app/deps/work/install/adb-windows"
 
-# Never fall back to system libs
+# Prefer the deps pkg-config directory but avoid leaking system pkg-config paths
 unset PKG_CONFIG_PATH
 export PKG_CONFIG_LIBDIR="$DEPS_INSTALL_DIR/lib/pkgconfig"
 
+# Also ensure the compiler can find headers/libs from the deps install
+# Some projects (SDL3) install headers under include/SDL3 so add both
+EXTRA_INCLUDE_ARGS="-I$DEPS_INSTALL_DIR/include"
+if [ -d "$DEPS_INSTALL_DIR/include/SDL3" ]; then
+  EXTRA_INCLUDE_ARGS="$EXTRA_INCLUDE_ARGS -I$DEPS_INSTALL_DIR/include/SDL3"
+fi
+
+# Add deps library path as well
+EXTRA_LINK_ARGS="-L$DEPS_INSTALL_DIR/lib"
+
 rm -rf "$WINXX_BUILD_DIR"
 meson setup "$WINXX_BUILD_DIR" \
-    -Dc_args="-I$DEPS_INSTALL_DIR/include" \
-    -Dc_link_args="-L$DEPS_INSTALL_DIR/lib" \
+    -Dc_args="$EXTRA_INCLUDE_ARGS" \
+    -Dc_link_args="$EXTRA_LINK_ARGS" \
     --cross-file=cross_$WINXX.txt \
     --buildtype=release \
     --strip \
