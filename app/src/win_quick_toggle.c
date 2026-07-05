@@ -4,7 +4,11 @@
 
 #include <windows.h>
 
+#include <SDL.h>
+#include <SDL_syswm.h>
+
 #include "util/log.h"
+
 
 // Default hotkey: Ctrl + ` (OEM_3)
 // RegisterHotKey MOD: use Ctrl only.
@@ -65,22 +69,26 @@ sc_win_quick_toggle_init(SDL_Window *window) {
 
     // Retrieve the native HWND from SDL.
     // SDL3 exposes it via SDL_GetPointerProperty with SDL_PROP_WINDOW_HWND.
-    // If this fails, we can still register the hotkey but cannot set tool
-    // window style.
+    // If this macro is not available (SDL2), fall back to SDL_GetWindowWMInfo.
     HWND hwnd = NULL;
 
+#if defined(SDL_PROP_WINDOW_HWND)
     SDL_PropertiesID props = SDL_GetWindowProperties(sc_window);
     if (props) {
-        // The property name exists on Windows builds of SDL3.
-        // It returns a pointer-sized integer casted from HWND.
-        //
-        // If SDL changes, this will fail safely.
         hwnd = (HWND)(intptr_t) SDL_GetPointerProperty(props, SDL_PROP_WINDOW_HWND, NULL);
     }
+#else
+    SDL_SysWMinfo wm_info;
+    SDL_VERSION(&wm_info.version);
+    if (SDL_GetWindowWMInfo(sc_window, &wm_info)) {
+        hwnd = wm_info.info.win.window;
+    }
+#endif
 
     if (hwnd) {
         sc_win_set_toolwindow(hwnd);
     }
+
 
     // Register global hotkey.
     // Using ` only works for US keyboard layout; it matches requirement default
@@ -131,14 +139,23 @@ sc_win_quick_toggle_handle_msg(const MSG *msg) {
         SDL_ShowWindow(sc_window);
 
         // Focus best-effort.
-        SDL_PropertiesID props = SDL_GetWindowProperties(sc_window);
         HWND hwnd = NULL;
+#if defined(SDL_PROP_WINDOW_HWND)
+        SDL_PropertiesID props = SDL_GetWindowProperties(sc_window);
         if (props) {
             hwnd = (HWND)(intptr_t) SDL_GetPointerProperty(props, SDL_PROP_WINDOW_HWND, NULL);
         }
+#else
+        SDL_SysWMinfo wm_info;
+        SDL_VERSION(&wm_info.version);
+        if (SDL_GetWindowWMInfo(sc_window, &wm_info)) {
+            hwnd = wm_info.info.win.window;
+        }
+#endif
         if (hwnd) {
             sc_win_focus_window(hwnd);
         }
+
     } else {
         SDL_HideWindow(sc_window);
     }
