@@ -1,6 +1,7 @@
 src = [
     'src/main.c',
     'src/adb/adb.c',
+    'src/win_quick_toggle.c',
     'src/adb/adb_device.c',
     'src/adb/adb_parser.c',
     'src/adb/adb_tunnel.c',
