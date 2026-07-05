@@ -61,6 +61,17 @@ else
         esac
     fi
 
+    # Ensure git metadata exists so dav1d's vcs_version generation doesn't fail when sources
+    # come from a tarball (CI environment). Initialize a minimal git repo only when needed.
+    if [ -d "$SOURCES_DIR/$PROJECT_DIR" ] && [ ! -d "$SOURCES_DIR/$PROJECT_DIR/.git" ]; then
+      echo "CI: initializing minimal git repository for $PROJECT_DIR"
+      git -C "$SOURCES_DIR/$PROJECT_DIR" init
+      git -C "$SOURCES_DIR/$PROJECT_DIR" config user.email "ci@example.com"
+      git -C "$SOURCES_DIR/$PROJECT_DIR" config user.name "CI"
+      git -C "$SOURCES_DIR/$PROJECT_DIR" add -A
+      git -C "$SOURCES_DIR/$PROJECT_DIR" commit -m "CI: init repo" >/dev/null 2>&1 || true
+    fi
+
     meson setup . "$SOURCES_DIR/$PROJECT_DIR" "${conf[@]}"
 fi
 
