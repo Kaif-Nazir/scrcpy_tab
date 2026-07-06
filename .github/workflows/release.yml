@@ -152,12 +152,19 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y meson ninja-build nasm \
+          sudo apt install -y meson ninja-build nasm cmake \
              mingw-w64 mingw-w64-tools libz-mingw-w64-dev
-
+  
+      - name: Build & install SDL3 (win32 cross)
+        run: |
+          # Build SDL3 for the mingw cross target and install into app/deps/work/install
+          app/deps/sdl.sh win32 cross shared
+          # Export PKG_CONFIG_PATH for subsequent steps
+          echo "PKG_CONFIG_PATH=$PWD/app/deps/work/install/win32-cross-shared/lib/pkgconfig" >> $GITHUB_ENV
+  
       - name: Build
         run: release/build_windows.sh 32
-
+  
       # upload-artifact does not preserve permissions
       - name: Tar
         run: |
@@ -165,7 +172,7 @@ jobs:
             mkdir dist-tar
             cd dist-tar
             tar -C .. -cvf dist.tar.gz dist/
-
+  
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
@@ -177,16 +184,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
+  
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y meson ninja-build nasm \
+          sudo apt install -y meson ninja-build nasm cmake \
              mingw-w64 mingw-w64-tools libz-mingw-w64-dev
-
+  
+      - name: Build & install SDL3 (win64 cross)
+        run: |
+          # Build SDL3 for the mingw cross target and install into app/deps/work/install
+          app/deps/sdl.sh win64 cross shared
+          # Export PKG_CONFIG_PATH for subsequent steps
+          echo "PKG_CONFIG_PATH=$PWD/app/deps/work/install/win64-cross-shared/lib/pkgconfig" >> $GITHUB_ENV
+  
       - name: Build
         run: release/build_windows.sh 64
-
+  
       # upload-artifact does not preserve permissions
       - name: Tar
         run: |
@@ -194,7 +208,7 @@ jobs:
             mkdir dist-tar
             cd dist-tar
             tar -C .. -cvf dist.tar.gz dist/
-
+  
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
