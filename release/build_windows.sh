@@ -35,10 +35,21 @@ ADB_INSTALL_DIR="$PWD/app/deps/work/install/adb-windows"
 export PKG_CONFIG_PATH="$DEPS_INSTALL_DIR/lib/pkgconfig${PKG_CONFIG_PATH:+:}$PKG_CONFIG_PATH"
 export PKG_CONFIG_LIBDIR="$DEPS_INSTALL_DIR/lib/pkgconfig"
 
-# Ensure the compiler searches common SDL include locations: include/, include/SDL3/, include/SDL/
-# Adding -I for non-existent dirs is harmless and covers different SDL install layouts.
-EXTRA_INCLUDE_ARGS="-I$DEPS_INSTALL_DIR/include -I$DEPS_INSTALL_DIR/include/SDL3 -I$DEPS_INSTALL_DIR/include/SDL"
-EXTRA_LINK_ARGS="-L$DEPS_INSTALL_DIR/lib"
+# Ensure the compiler sees the deps include/lib dirs even if Meson doesn't get them
+export CFLAGS="-I$DEPS_INSTALL_DIR/include -I$DEPS_INSTALL_DIR/include/SDL3 -I$DEPS_INSTALL_DIR/include/SDL ${CFLAGS:-}"
+export CPPFLAGS="$CFLAGS ${CPPFLAGS:-}"
+export LDFLAGS="-L$DEPS_INSTALL_DIR/lib ${LDFLAGS:-}"
+
+# Debug: show pkg-config files and SDL header layout (useful in CI logs)
+echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+echo "CFLAGS=$CFLAGS"
+echo "LDFLAGS=$LDFLAGS"
+echo "Listing $DEPS_INSTALL_DIR/lib/pkgconfig:"
+ls -la "$DEPS_INSTALL_DIR/lib/pkgconfig" || true
+echo "Installed SDL headers:"
+ls -la "$DEPS_INSTALL_DIR/include" || true
+ls -la "$DEPS_INSTALL_DIR/include/SDL3" || true
+ls -la "$DEPS_INSTALL_DIR/include/SDL" || true
 
 # Robustness: if SDL's CMake install didn't create a pkg-config file, create a minimal fallback sdl3.pc
 mkdir -p "$DEPS_INSTALL_DIR/lib/pkgconfig"
@@ -58,20 +69,6 @@ EOF
   sed -i "s|@DEPS_INSTALL_DIR@|$DEPS_INSTALL_DIR|g" "$DEPS_INSTALL_DIR/lib/pkgconfig/sdl3.pc"
 fi
 
-# Debug: show pkg-config files and SDL header layout (useful in CI logs)
-echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-echo "Listing $DEPS_INSTALL_DIR/lib/pkgconfig:"
-ls -la "$DEPS_INSTALL_DIR/lib/pkgconfig" || true
-echo "Installed SDL headers:"
-ls -la "$DEPS_INSTALL_DIR/include" || true
-ls -la "$DEPS_INSTALL_DIR/include/SDL3" || true
-ls -la "$DEPS_INSTALL_DIR/include/SDL" || true
-
-# Ensure the compiler sees the deps include/lib dirs even if Meson doesn't get them
-export CFLAGS="-I$DEPS_INSTALL_DIR/include -I$DEPS_INSTALL_DIR/include/SDL3 -I$DEPS_INSTALL_DIR/include/SDL ${CFLAGS:-}"
-export CPPFLAGS="$CFLAGS ${CPPFLAGS:-}"
-export LDFLAGS="-L$DEPS_INSTALL_DIR/lib ${LDFLAGS:-}"
-
 # Configure and build
 rm -rf "$WINXX_BUILD_DIR"
 meson setup "$WINXX_BUILD_DIR" \
@@ -81,9 +78,7 @@ meson setup "$WINXX_BUILD_DIR" \
     -Db_lto=true \
     -Dcompile_server=false \
     -Dportable=true \
-    -Dv4l2=false \
-    "-Dc_args=$EXTRA_INCLUDE_ARGS" \
-    "-Dc_link_args=$EXTRA_LINK_ARGS"
+    -Dv4l2=false
 
 ninja -C "$WINXX_BUILD_DIR"
 
