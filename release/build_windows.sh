@@ -75,7 +75,7 @@ export LDFLAGS="-L$DEPS_INSTALL_DIR/lib ${LDFLAGS:-}"
 # Configure and build
 rm -rf "$WINXX_BUILD_DIR"
 meson setup "$WINXX_BUILD_DIR" \
-    -Dc_args="$EXTRA_INCLUDE_ARGS" \
+    -Dc_args="$EXTRA_INCLUDE_ARGS"
     -Dc_link_args="$EXTRA_LINK_ARGS" \
     --cross-file=cross_$WINXX.txt \
     --buildtype=release \
