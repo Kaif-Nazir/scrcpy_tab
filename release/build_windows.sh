@@ -75,14 +75,16 @@ export LDFLAGS="-L$DEPS_INSTALL_DIR/lib ${LDFLAGS:-}"
 # Configure and build
 rm -rf "$WINXX_BUILD_DIR"
 meson setup "$WINXX_BUILD_DIR" \
-    -Dc_args="$EXTRA_INCLUDE_ARGS"
-    -Dc_link_args="$EXTRA_LINK_ARGS" \
     --cross-file=cross_$WINXX.txt \
     --buildtype=release \
     --strip \
     -Db_lto=true \
     -Dcompile_server=false \
-    -Dportable=true
+    -Dportable=true \
+    -Dv4l2=false \
+    -Dc_args="$EXTRA_INCLUDE_ARGS" \
+    -Dc_link_args="$EXTRA_LINK_ARGS"
+
 ninja -C "$WINXX_BUILD_DIR"
 
 # Group intermediate outputs into a 'dist' directory
