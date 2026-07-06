@@ -82,8 +82,8 @@ meson setup "$WINXX_BUILD_DIR" \
     -Dcompile_server=false \
     -Dportable=true \
     -Dv4l2=false \
-    -Dc_args="$EXTRA_INCLUDE_ARGS" \
-    -Dc_link_args="$EXTRA_LINK_ARGS"
+    "-Dc_args=$EXTRA_INCLUDE_ARGS" \
+    "-Dc_link_args=$EXTRA_LINK_ARGS"
 
 ninja -C "$WINXX_BUILD_DIR"
 
