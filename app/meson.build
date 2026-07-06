@@ -104,7 +104,7 @@ endif
 
 add_project_arguments(feature_test_macros, language: 'c')
 
-v4l2_support = get_option('v4l2') and host_machine.system() == 'linux'
+v4l2_support = get_option('v4l2') and host_machine.system() == 'linux' and not meson.is_cross_build()
 if v4l2_support
     src += [ 'src/v4l2_sink.c' ]
 endif
